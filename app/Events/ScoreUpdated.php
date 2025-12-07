@@ -25,4 +25,10 @@ class ScoreUpdated implements ShouldBroadcastNow
             new Channel('game.' . $this->gameId),
         ];
     }
+
+    // --- TAMBAHKAN FUNGSI INI ---
+    public function broadcastAs(): string
+    {
+        return 'score.updated';
+    }
 }

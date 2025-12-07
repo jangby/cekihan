@@ -56,13 +56,18 @@ class PlayerControls extends Component
     }
 
     public function getListeners()
-    {
-        return [
-            "echo:game.{$this->game->id},CekihEvent" => 'handleCekihEvent',
-            "echo:game.{$this->game->id},ScoreUpdated" => '$refresh',
-            "echo:game.{$this->game->id},GameOver" => 'handleGameOver', // <--- Listener Baru
-        ];
-    }
+{
+    return [
+        // Dengar update skor (untuk refresh status 'Menunggu')
+        "echo:game.{$this->game->id},score.updated" => '$refresh',
+        
+        // Dengar Cekih (pakai nama alias baru)
+        "echo:game.{$this->game->id},cekih.event" => 'handleCekihEvent',
+        
+        // Dengar Game Over (pakai nama alias baru)
+        "echo:game.{$this->game->id},game.over" => 'handleGameOver', 
+    ];
+}
 
     // --- HANDLER EVENT ---
 

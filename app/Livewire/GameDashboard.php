@@ -24,12 +24,15 @@ class GameDashboard extends Component
     }
 
     public function getListeners()
-    {
-        return [
-            "echo:game.{$this->game->id},ScoreUpdated" => 'refreshData',
-            "echo:game.{$this->game->id},GameOver" => 'showGameResult' // <--- Listener Baru
-        ];
-    }
+{
+    return [
+        // Dengar update skor
+        "echo:game.{$this->game->id},score.updated" => 'refreshData',
+        
+        // Dengar Game Over
+        "echo:game.{$this->game->id},game.over" => 'showGameResult' 
+    ];
+}
 
     public function showGameResult($payload)
     {

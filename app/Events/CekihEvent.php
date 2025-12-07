@@ -28,10 +28,8 @@ class CekihEvent implements ShouldBroadcastNow
         $this->attackerName = $attackerName;
     }
 
-    public function broadcastOn(): array
+    public function broadcastAs(): string
     {
-        return [
-            new Channel('game.' . $this->gameId),
-        ];
+        return 'cekih.event';
     }
 }

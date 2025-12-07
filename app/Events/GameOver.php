@@ -29,5 +29,11 @@ class GameOver implements ShouldBroadcastNow
         return [
             new Channel('game.' . $this->gameId),
         ];
+        
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'game.over';
     }
 }
