@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 <div class="min-h-screen bg-gray-900 text-white p-4 flex flex-col">
     
     <div class="flex justify-between items-center mb-6 px-4">
@@ -43,26 +45,81 @@
     </div>
 
     @if($showEndScreen)
-        <div class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center text-center p-10">
-            @if($loser)
-                <div class="mb-10 animate-pulse">
-                    <div class="text-[100px]">💀</div>
-                    <h2 class="text-red-500 text-3xl font-bold uppercase tracking-widest">GAME OVER</h2>
-                    <h1 class="text-white text-5xl font-black mt-2">{{ $loser->name }} BANGKRUT!</h1>
-                    <p class="text-gray-400 mt-2">Skor menyentuh {{ $loser->score }}</p>
-                </div>
-            @endif
+        <script>
+            var duration = 5 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
 
-            <div class="bg-gradient-to-b from-yellow-600 to-yellow-800 p-1 rounded-3xl shadow-2xl transform scale-125">
-                <div class="bg-gray-900 rounded-[22px] p-10 border border-yellow-500/30">
-                    <div class="text-6xl mb-4">👑</div>
-                    <p class="text-yellow-500 font-bold tracking-[0.5em] text-sm uppercase mb-2">THE CHAMPION</p>
-                    <h1 class="text-6xl font-black text-white mb-4">{{ $winner->name ?? '...' }}</h1>
-                    <div class="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">{{ $winner->score ?? 0 }}</div>
+            function randomInOut(min, max) { return Math.random() * (max - min) + min; }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInOut(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        </script>
+
+        <div class="fixed inset-0 z-50 bg-gray-900/95 flex flex-col items-center justify-center text-center p-4 backdrop-blur-sm">
+            
+            <h1 class="text-5xl font-black text-white mb-10 tracking-[10px] uppercase drop-shadow-2xl">HASIL AKHIR</h1>
+
+            <div class="flex items-end justify-center gap-4 w-full max-w-4xl mb-12">
+                
+                @php $rank2 = $players->sortByDesc('score')->skip(1)->first(); @endphp
+                <div class="flex flex-col items-center w-1/4">
+                    <div class="mb-2 text-gray-300 font-bold text-xl">{{ $rank2->name }}</div>
+                    <div class="h-40 w-full bg-gray-400 rounded-t-lg flex items-end justify-center pb-4 shadow-2xl border-t-4 border-gray-300">
+                        <span class="text-4xl font-black text-gray-600">2</span>
+                    </div>
+                    <div class="mt-2 bg-gray-800 px-4 py-1 rounded text-white font-bold">{{ $rank2->score }}</div>
                 </div>
+
+                @php $rank1 = $players->sortByDesc('score')->first(); @endphp
+                <div class="flex flex-col items-center w-1/3 z-10 -mx-2">
+                    <div class="text-6xl mb-4 animate-bounce">👑</div>
+                    <div class="mb-2 text-yellow-400 font-black text-3xl uppercase">{{ $rank1->name }}</div>
+                    <div class="h-64 w-full bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-t-lg flex items-end justify-center pb-6 shadow-[0_0_50px_rgba(234,179,8,0.6)] border-t-4 border-yellow-200">
+                        <span class="text-6xl font-black text-yellow-800">1</span>
+                    </div>
+                    <div class="mt-4 bg-yellow-600 px-6 py-2 rounded-full text-black font-black text-2xl shadow-lg transform scale-110">
+                        {{ $rank1->score }}
+                    </div>
+                </div>
+
+                @php $rank3 = $players->sortByDesc('score')->skip(2)->first(); @endphp
+                <div class="flex flex-col items-center w-1/4">
+                    <div class="mb-2 text-orange-300 font-bold text-xl">{{ $rank3->name }}</div>
+                    <div class="h-32 w-full bg-orange-700 rounded-t-lg flex items-end justify-center pb-4 shadow-2xl border-t-4 border-orange-500">
+                        <span class="text-4xl font-black text-orange-900">3</span>
+                    </div>
+                    <div class="mt-2 bg-gray-800 px-4 py-1 rounded text-white font-bold">{{ $rank3->score }}</div>
+                </div>
+
             </div>
 
-            <button onclick="window.location.reload()" class="mt-20 bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition">Main Lagi (Reset)</button>
+            @php $rank4 = $players->sortByDesc('score')->skip(3)->first(); @endphp
+            @if($rank4)
+                <div class="mt-8 bg-red-900/50 p-4 rounded-xl border border-red-500/30 flex items-center gap-4 max-w-lg">
+                    <div class="text-4xl">🤡</div>
+                    <div class="text-left">
+                        <h3 class="text-red-400 font-bold text-xs uppercase">BADUT HARI INI</h3>
+                        <p class="text-white font-bold text-lg">{{ $rank4->name }} ({{ $rank4->score }})</p>
+                        <p class="text-red-300 text-xs italic">"Jangan lupa traktir kopi sebagai hukuman."</p>
+                    </div>
+                </div>
+            @endif
+            
+            <div class="flex gap-4 mt-10">
+                <a href="{{ route('game.download-pdf', $game->id) }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg transition">
+    🖨️ Cetak Berita Acara
+</a>
+                <button onclick="window.location.reload()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                    Main Lagi (Reset)
+                </button>
+            </div>
+
         </div>
     @endif
 </div>

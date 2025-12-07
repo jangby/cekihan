@@ -1,14 +1,48 @@
 <div class="min-h-screen text-white pb-20 transition-colors duration-500 {{ $isUnderAttack ? 'bg-red-900' : 'bg-gray-900' }}">
     
     @if($isGameEnded)
-        <div class="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-6 text-center">
-            <div class="animate-bounce text-6xl mb-4">🏁</div>
-            <h1 class="text-4xl font-black text-yellow-500 mb-2">PERMAINAN SELESAI!</h1>
-            <p class="text-gray-400 mb-8">Lihat layar utama untuk hasil akhir.</p>
-            <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-700">
-                <p class="text-xs uppercase text-gray-500">Skor Akhir Kamu</p>
-                <p class="text-5xl font-black text-white mt-2">{{ $player->score }}</p>
+        <div class="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 text-center overflow-hidden
+            {{-- Background Beda-beda tiap Juara --}}
+            @if($myRank == 1) bg-gradient-to-b from-yellow-700 to-yellow-900
+            @elseif($myRank == 4) bg-gray-900 grayscale
+            @else bg-blue-900
+            @endif">
+            
+            @if($myRank == 1)
+                {{-- JUARA 1: EMAS & PUJIAN --}}
+                <div class="animate-bounce text-8xl mb-4">🏆</div>
+                <h2 class="text-yellow-400 font-bold tracking-widest text-xl uppercase mb-1">CONGRATULATIONS</h2>
+                <h1 class="text-5xl font-black text-white mb-6 drop-shadow-lg">KAMU JUARA 1!</h1>
+                <p class="text-yellow-200 italic mb-10">"Skill menyala abangkuh! 🔥"</p>
+            
+            @elseif($myRank == 4)
+                {{-- JUARA 4: EJEKAN & SURAM --}}
+                <div class="animate-pulse text-8xl mb-4">🤡</div>
+                <h2 class="text-gray-500 font-bold tracking-widest text-xl uppercase mb-1">YAHHHH...</h2>
+                <h1 class="text-5xl font-black text-gray-300 mb-6">POSISI BUNCIT</h1>
+                <p class="text-gray-400 italic mb-10 text-sm">
+                    "Malu sama kucing... 🐈<br>
+                    Mending uninstall aja bang."
+                </p>
+
+            @else
+                {{-- JUARA 2 & 3: NORMAL --}}
+                <div class="text-8xl mb-4">👏</div>
+                <h2 class="text-blue-300 font-bold tracking-widest text-xl uppercase mb-1">NICE TRY</h2>
+                <h1 class="text-5xl font-black text-white mb-6">JUARA {{ $myRank }}</h1>
+                <p class="text-blue-200 italic mb-10">"Dikit lagi hoki, coba lagi tahun depan."</p>
+            @endif
+
+            <div class="bg-black/30 p-6 rounded-xl w-full max-w-sm border border-white/10 mb-6 backdrop-blur-md">
+                <p class="text-xs uppercase text-gray-300">Skor Akhir Kamu</p>
+                <p class="text-6xl font-black text-white mt-2 tracking-tighter">{{ $player->score }}</p>
             </div>
+
+            <a href="{{ route('game.download-pdf', $game->id) }}" target="_blank" 
+   class="bg-white text-black font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition transform hover:scale-105 active:scale-95 flex items-center space-x-2">
+    <span>🖨️</span>
+    <span>DOWNLOAD SERTIFIKAT</span>
+</a>
         </div>
     @endif
 

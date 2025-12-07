@@ -5,6 +5,8 @@ use App\Livewire\GameHost;
 use App\Livewire\GamePlayer;
 use App\Livewire\GameDashboard;
 use App\Livewire\PlayerControls;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Game;
 
 Route::get('/', GameHost::class)->name('home');
 
@@ -15,3 +17,32 @@ Route::get('/game/{game}', GameDashboard::class)->name('game.dashboard');
 
 // Route untuk Kontrol Pemain
 Route::get('/play/{game}/{player}', PlayerControls::class)->name('player.controls');
+
+// Route untuk melihat History Permainan
+Route::get('/game/{game}/history', function (Game $game) {
+    // Ambil data history urut dari yang terlama
+    $histories = $game->histories()->with('player')->orderBy('id')->get();
+    $players = $game->players;
+    
+    return view('history', compact('game', 'histories', 'players'));
+})->name('game.history');
+
+Route::get('/game/{game}/download-pdf', function (Game $game) {
+    // 1. Ambil data history
+    $histories = $game->histories()->with('player')->orderBy('id')->get();
+    
+    // 2. Ambil data pemain & urutkan ranking
+    $players = $game->players()->orderByDesc('score')->get();
+    
+    // 3. Tentukan siapa yang Tanda Tangan
+    $champion = $players->first(); // Juara 1
+    $loser = $players->last();     // Juara Terakhir (Badut)
+
+    // 4. Generate PDF
+    // Kita pakai kertas A4 Portrait
+    $pdf = Pdf::loadView('pdf.game-report', compact('game', 'histories', 'players', 'champion', 'loser'));
+    
+    // 5. Download file dengan nama unik
+    return $pdf->download('Berita-Acara-Remi-'.$game->room_code.'.pdf');
+
+})->name('game.download-pdf');

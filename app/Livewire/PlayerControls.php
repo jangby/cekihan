@@ -31,6 +31,23 @@ class PlayerControls extends Component
 
     // Status Game
     public $isGameEnded = false; // <--- Variable Baru
+    public $myRank = 0;
+
+    public function handleGameOver($payload)
+    {
+        $this->isGameEnded = true;
+        
+        // HITUNG RANKING SAYA
+        // Ambil semua pemain, urutkan skor dari tinggi ke rendah
+        $allPlayers = Player::where('game_id', $this->game->id)
+                            ->orderByDesc('score')
+                            ->get();
+        
+        // Cari urutan saya (index + 1)
+        $this->myRank = $allPlayers->search(function($p) {
+            return $p->id == $this->player->id;
+        }) + 1;
+    }
 
     public function mount(Game $game, Player $player)
     {
@@ -48,12 +65,6 @@ class PlayerControls extends Component
     }
 
     // --- HANDLER EVENT ---
-
-    public function handleGameOver($payload)
-    {
-        // Kunci layar semua pemain jika game selesai
-        $this->isGameEnded = true;
-    }
 
     public function handleCekihEvent($payload)
     {
