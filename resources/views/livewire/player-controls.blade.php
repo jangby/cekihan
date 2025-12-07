@@ -1,48 +1,38 @@
 <div class="min-h-screen text-white pb-20 transition-colors duration-500 {{ $isUnderAttack ? 'bg-red-900' : 'bg-gray-900' }}">
     
     @if($isGameEnded)
-        <div class="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 text-center overflow-hidden
-            {{-- Background Beda-beda tiap Juara --}}
-            @if($myRank == 1) bg-gradient-to-b from-yellow-700 to-yellow-900
-            @elseif($myRank == 4) bg-gray-900 grayscale
-            @else bg-blue-900
-            @endif">
+        <div class="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 text-center overflow-hidden ... (style background)">
             
-            @if($myRank == 1)
-                {{-- JUARA 1: EMAS & PUJIAN --}}
-                <div class="animate-bounce text-8xl mb-4">🏆</div>
-                <h2 class="text-yellow-400 font-bold tracking-widest text-xl uppercase mb-1">CONGRATULATIONS</h2>
-                <h1 class="text-5xl font-black text-white mb-6 drop-shadow-lg">KAMU JUARA 1!</h1>
-                <p class="text-yellow-200 italic mb-10">"Skill menyala abangkuh! 🔥"</p>
-            
-            @elseif($myRank == 4)
-                {{-- JUARA 4: EJEKAN & SURAM --}}
-                <div class="animate-pulse text-8xl mb-4">🤡</div>
-                <h2 class="text-gray-500 font-bold tracking-widest text-xl uppercase mb-1">YAHHHH...</h2>
-                <h1 class="text-5xl font-black text-gray-300 mb-6">POSISI BUNCIT</h1>
-                <p class="text-gray-400 italic mb-10 text-sm">
-                    "Malu sama kucing... 🐈<br>
-                    Mending uninstall aja bang."
-                </p>
+            @if($myRank == 4)
+                
+                {{-- CEK APAKAH KALAH KARENA MENYERAH? --}}
+                @if($player->score <= -999) 
+                    {{-- TAMPILAN KHUSUS PENYERAH --}}
+                    <div class="animate-pulse text-8xl mb-4">🏳️</div>
+                    <h2 class="text-gray-500 font-bold tracking-widest text-xl uppercase mb-1">MEMUTUSKAN MUNDUR</h2>
+                    <h1 class="text-5xl font-black text-white mb-6">KAMU MENYERAH</h1>
+                    <p class="text-gray-400 italic mb-10 text-sm">
+                        "Keputusan yang bijak... daripada hancur lebur."
+                    </p>
+
+                    <a href="{{ route('game.surrender-pdf', ['game' => $game->id, 'player' => $player->id]) }}" target="_blank" 
+                    class="bg-red-600 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:bg-red-500 transition transform hover:scale-105 active:scale-95 flex items-center space-x-2">
+                        <span>📜</span>
+                        <span>UNDUH SURAT KEKALAHAN</span>
+                    </a>
+
+                @else
+                    {{-- TAMPILAN KALAH BIASA (-500) --}}
+                    <div class="animate-pulse text-8xl mb-4">🤡</div>
+                    <a href="{{ route('game.download-pdf', $game->id) }}" target="_blank" class="...">
+                        <span>🖨️</span> <span>DOWNLOAD BERITA ACARA</span>
+                    </a>
+                @endif
 
             @else
-                {{-- JUARA 2 & 3: NORMAL --}}
-                <div class="text-8xl mb-4">👏</div>
-                <h2 class="text-blue-300 font-bold tracking-widest text-xl uppercase mb-1">NICE TRY</h2>
-                <h1 class="text-5xl font-black text-white mb-6">JUARA {{ $myRank }}</h1>
-                <p class="text-blue-200 italic mb-10">"Dikit lagi hoki, coba lagi tahun depan."</p>
+                <a href="{{ route('game.download-pdf', $game->id) }}" target="_blank" class="...">...</a>
             @endif
 
-            <div class="bg-black/30 p-6 rounded-xl w-full max-w-sm border border-white/10 mb-6 backdrop-blur-md">
-                <p class="text-xs uppercase text-gray-300">Skor Akhir Kamu</p>
-                <p class="text-6xl font-black text-white mt-2 tracking-tighter">{{ $player->score }}</p>
-            </div>
-
-            <a href="{{ route('game.download-pdf', $game->id) }}" target="_blank" 
-   class="bg-white text-black font-bold py-4 px-8 rounded-full shadow-lg hover:bg-gray-200 transition transform hover:scale-105 active:scale-95 flex items-center space-x-2">
-    <span>🖨️</span>
-    <span>DOWNLOAD SERTIFIKAT</span>
-</a>
         </div>
     @endif
 
@@ -120,6 +110,17 @@
                     </form>
                 </div>
                 <button wire:click="openCekihModal" class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 text-white font-black py-6 rounded-2xl text-2xl shadow-xl border-b-4 border-red-800 active:border-b-0 active:translate-y-1 transition group"><span class="inline-block group-active:scale-90 transition">⚡ CEKIH LAWAN!</span></button>
+
+                <div class="pt-4 border-t border-gray-700 mt-4">
+                    <button wire:click="surrender"
+                        onclick="return confirm('YAKIN MENYERAH? \n\nKamu akan otomatis kalah dan harus menandatangani Surat Pernyataan Kekalahan! 🏳️')" 
+                        class="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 font-bold py-4 rounded-xl text-sm border border-gray-600 transition flex items-center justify-center gap-2">
+                        <span>🏳️</span> SAYA MENYERAH
+                    </button>
+                    <p class="text-[10px] text-gray-600 text-center mt-2">
+                        Menekan tombol ini berarti mengakui kekalahan mutlak.
+                    </p>
+                </div>
             @endif
         </div>
     </div>

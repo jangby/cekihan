@@ -246,4 +246,25 @@ class PlayerControls extends Component
     {
         return view('livewire.player-controls');
     }
+
+    // FUNGSI BARU: MENYERAH
+    public function surrender()
+    {
+        // 1. Set skor jadi minus banget (simbolis) agar otomatis jadi loser
+        $this->player->score = -999; 
+        $this->player->save();
+
+        // 2. Catat di history bahwa dia menyerah
+        ScoreHistory::create([
+            'game_id' => $this->game->id,
+            'player_id' => $this->player->id,
+            'round_number' => 0,
+            'points_added' => 0,
+            'type' => 'reset' // Atau buat type baru 'surrender' kalau mau
+        ]);
+
+        // 3. Panggil Game Over (Reason: 'surrender')
+        // Kita kirim data diri sendiri sebagai pemicu
+        $this->finishGame('surrender', $this->player);
+    }
 }

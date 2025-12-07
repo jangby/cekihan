@@ -46,3 +46,18 @@ Route::get('/game/{game}/download-pdf', function (Game $game) {
     return $pdf->download('Berita-Acara-Remi-'.$game->room_code.'.pdf');
 
 })->name('game.download-pdf');
+
+// Route Download Surat Menyerah
+Route::get('/game/{game}/surrender-pdf/{player}', function (Game $game, Player $player) {
+    
+    // Ambil data juara (skor tertinggi saat ini) untuk jadi saksi
+    $winner = $game->players()->orderByDesc('score')->first();
+
+    $pdf = Pdf::loadView('pdf.surrender-letter', compact('game', 'player', 'winner'));
+    
+    // Set kertas A4
+    $pdf->setPaper('a4', 'portrait');
+
+    return $pdf->download('SURAT-PERNYATAAN-MENYERAH-'.$player->name.'.pdf');
+
+})->name('game.surrender-pdf');

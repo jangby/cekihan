@@ -108,4 +108,29 @@ class GameHost extends Component
         
         return view('livewire.game-host');
     }
+
+    // ... method lainnya ...
+
+    // FUNGSI BARU: BERSIHKAN LOBBY
+    public function resetLobby()
+    {
+        // 1. Hapus semua pemain di game ini
+        $this->game->players()->delete();
+
+        // 2. Hapus riwayat (jika ada sisa-sisa)
+        $this->game->histories()->delete();
+
+        // 3. Reset Posisi QR ke 1
+        $this->game->update([
+            'current_qr_position' => 1,
+            'status' => 'waiting' // Pastikan status kembali waiting
+        ]);
+
+        // 4. Refresh data lokal
+        $this->players = [];
+        $this->updateQrCode();
+        
+        // Opsional: Kirim sinyal agar HP pemain yang terlanjur join me-refresh diri (kick)
+        // Tapi untuk simpelnya, mereka cukup scan ulang saja.
+    }
 }
