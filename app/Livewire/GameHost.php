@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Events\LobbyReset;
 use App\Models\Game;
 use Livewire\Component;
 use Illuminate\Support\Str;
@@ -69,22 +70,40 @@ class GameHost extends Component
     public function getListeners()
     {
         return [
-            // Format: echo:{nama_channel},{nama_event} => nama_fungsi_di_sini
-            "echo:game.{$this->game->id},PlayerJoined" => 'refreshPlayerStatus'
+            // 1. Dengar Event Pemain Masuk (Coba 2 variasi agar 100% kena)
+            "echo:game.{$this->game->id},.player.joined" => 'refreshPlayerStatus', // Pakai titik
+            "echo:game.{$this->game->id},player.joined" => 'refreshPlayerStatus',  // Tanpa titik
+            
+            // 2. Dengar Event Lainnya
+            "echo:game.{$this->game->id},score.updated" => 'refreshPlayerStatus', // Update skor juga refresh player list
+            "echo:game.{$this->game->id},.score.updated" => 'refreshPlayerStatus',
+
+            "echo:game.{$this->game->id},lobby.reset" => '$refresh',
+            "echo:game.{$this->game->id},.lobby.reset" => '$refresh',
         ];
     }
 
-    // Fungsi ini jalan otomatis saat ada sinyal masuk
     public function refreshPlayerStatus()
     {
-        // 1. Ambil data game terbaru (karena status QR position mungkin berubah)
-        $this->game->refresh();
+        // 1. Ambil ulang data game beserta pemainnya dari database (Fresh)
+        // Kita pakai ::with('players') agar lebih efisien
+        $freshGame = Game::with('players')->find($this->game->id);
 
-        // 2. Ambil data pemain terbaru
-        $this->players = $this->game->players->toArray();
+        if ($freshGame) {
+            $this->game = $freshGame;
+            $this->players = $freshGame->players->toArray();
+            
+            // 2. Update QR Code
+            $playerCount = count($this->players);
+            if ($playerCount < 4) {
+                $this->game->update(['current_qr_position' => $playerCount + 1]);
+            }
+            $this->updateQrCode();
 
-        // 3. Update QR Code (siapa tau ganti ke pemain selanjutnya)
-        $this->updateQrCode();
+            // 3. (DEBUG) Tampilkan notifikasi kecil bahwa ada update
+            // Ini agar kamu tau kalau listenernya berhasil jalan
+            $this->dispatch('show-toast', type: 'success', message: 'Data diperbarui!');
+        }
     }
     // ----------------------------
 
@@ -109,28 +128,33 @@ class GameHost extends Component
         return view('livewire.game-host');
     }
 
-    // ... method lainnya ...
-
-    // FUNGSI BARU: BERSIHKAN LOBBY
     public function resetLobby()
     {
-        // 1. Hapus semua pemain di game ini
-        $this->game->players()->delete();
+        try {
+            // 1. HAPUS DATA (Urutan: Cucu -> Anak)
+            \App\Models\ScoreHistory::where('game_id', $this->game->id)->delete();
+            \App\Models\Player::where('game_id', $this->game->id)->delete();
 
-        // 2. Hapus riwayat (jika ada sisa-sisa)
-        $this->game->histories()->delete();
+            // 2. RESET INDUK
+            $this->game->update([
+                'current_qr_position' => 1,
+                'status' => 'waiting',
+                'winner_id' => null
+            ]);
 
-        // 3. Reset Posisi QR ke 1
-        $this->game->update([
-            'current_qr_position' => 1,
-            'status' => 'waiting' // Pastikan status kembali waiting
-        ]);
+            // 3. REFRESH LOCAL
+            $this->players = [];
+            $this->updateQrCode();
 
-        // 4. Refresh data lokal
-        $this->players = [];
-        $this->updateQrCode();
-        
-        // Opsional: Kirim sinyal agar HP pemain yang terlanjur join me-refresh diri (kick)
-        // Tapi untuk simpelnya, mereka cukup scan ulang saja.
+            // 4. KIRIM SINYAL PENGUSIRAN KE HP PEMAIN
+            \App\Events\LobbyReset::dispatch($this->game->id);
+
+            // 5. KIRIM SINYAL SUKSES KE LAYAR HOST (Untuk Pop-up)
+            $this->dispatch('show-toast', type: 'success', message: 'Lobi berhasil di-reset!');
+
+        } catch (\Exception $e) {
+            // JIKA GAGAL
+            $this->dispatch('show-toast', type: 'error', message: 'Gagal mereset: ' . $e->getMessage());
+        }
     }
 }

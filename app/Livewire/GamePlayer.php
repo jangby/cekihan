@@ -63,8 +63,14 @@ class GamePlayer extends Component
     {
         return [
             // Kalau ada event GameStarted, jalankan fungsi redirectToGame
-            "echo:game.{$this->game->id},GameStarted" => 'redirectToGame'
+            "echo:game.{$this->game->id},GameStarted" => 'redirectToGame',
+            "echo:game.{$this->game->id},lobby.reset" => 'handleKicked'
         ];
+    }
+
+    public function handleKicked()
+    {
+        return redirect()->route('home'); // Atau route landing page kamu
     }
 
     public function redirectToGame()

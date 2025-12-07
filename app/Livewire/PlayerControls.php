@@ -66,9 +66,14 @@ class PlayerControls extends Component
         
         // Dengar Game Over (pakai nama alias baru)
         "echo:game.{$this->game->id},game.over" => 'handleGameOver', 
+        "echo:game.{$this->game->id},lobby.reset" => 'handleKicked'
     ];
 }
 
+public function handleKicked()
+    {
+        return redirect()->route('home'); // Atau route landing page kamu
+    }
     // --- HANDLER EVENT ---
 
     public function handleCekihEvent($payload)

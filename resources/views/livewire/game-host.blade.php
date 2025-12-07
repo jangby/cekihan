@@ -1,7 +1,50 @@
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 md:p-6 text-white font-sans overflow-x-hidden">
     
+    @script
+    <script>
+        // 1. Fungsi Konfirmasi saat tombol diklik
+        window.confirmResetLobby = function() {
+            Swal.fire({
+                title: 'Reset Permainan?',
+                text: "Semua pemain akan dikeluarkan dan skor dihapus permanen!",
+                icon: 'warning',
+                background: '#1f2937', 
+                color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: '#d33', 
+                cancelButtonColor: '#374151', 
+                confirmButtonText: 'Ya, Reset Sekarang!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $wire.resetLobby();
+                }
+            })
+        }
+
+        // 2. Menangkap Sinyal Sukses/Gagal dari PHP
+        // PERBAIKAN DISINI: Hapus [0]
+        $wire.on('show-toast', (data) => {
+            
+            // Kita langsung pakai 'data' karena dia sudah berupa Object
+            // Hapus baris: const payload = data[0]; 
+            
+            Swal.fire({
+                title: data.type === 'success' ? 'Berhasil!' : 'Gagal!',
+                text: data.message,
+                icon: data.type,
+                background: '#1f2937',
+                color: '#fff',
+                timer: 2000, 
+                showConfirmButton: false
+            });
+        });
+    </script>
+    @endscript
+
     <div class="relative md:absolute top-0 md:top-10 text-center mb-6 md:mb-0 mt-4 md:mt-0 z-10">
         <p class="text-gray-400 text-[10px] md:text-sm uppercase tracking-[0.2em]">KODE RUANGAN</p>
         <h1 class="text-5xl md:text-6xl font-black text-yellow-500 tracking-widest drop-shadow-lg">{{ $game->room_code }}</h1>
@@ -10,7 +53,6 @@
     <div class="bg-gray-800 p-6 md:p-8 rounded-3xl shadow-2xl border border-gray-700 flex flex-col items-center text-center w-full max-w-sm md:max-w-2xl relative z-20">
         
         @if(count($players) < 4)
-            
             <div class="mb-4 md:mb-6">
                 <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">
                     Menunggu <span class="text-yellow-400">Pemain {{ count($players) + 1 }}</span>
@@ -31,9 +73,8 @@
                 {{ $qrCodeUrl }}
             </p>
 
-            <button wire:click="resetLobby" 
-                onclick="return confirm('⚠️ PERINGATAN:\n\nApakah Anda yakin ingin mereset lobi?\nSemua pemain yang sudah masuk akan dikeluarkan!')"
-                class="text-[10px] md:text-xs bg-red-900/40 hover:bg-red-900 text-red-300 px-4 py-2 rounded-full transition border border-red-500/30 flex items-center gap-2">
+            <button onclick="confirmResetLobby()" 
+                class="text-[10px] md:text-xs bg-red-900/40 hover:bg-red-900 text-red-300 px-4 py-2 rounded-full transition border border-red-500/30 flex items-center gap-2 cursor-pointer">
                 <span>🗑️</span> Reset / Kick Semua Pemain
             </button>
 
@@ -42,7 +83,6 @@
             </div>
 
         @else
-            
             <div class="text-center py-6 md:py-10">
                 <div class="text-5xl md:text-6xl mb-4 animate-bounce">✅</div>
                 <h2 class="text-2xl md:text-4xl font-bold text-green-400 mb-4 md:mb-6">Semua Pemain Siap!</h2>
@@ -56,51 +96,36 @@
                 </button>
                 
                 <div class="mt-6">
-                    <button wire:click="resetLobby" 
-                        onclick="return confirm('Reset ulang lobi?')"
-                        class="text-xs text-red-400 hover:text-red-300 underline">
+                    <button onclick="confirmResetLobby()" 
+                        class="text-xs text-red-400 hover:text-red-300 underline cursor-pointer">
                         Batal & Reset Ulang
                     </button>
                 </div>
             </div>
-
         @endif
-
     </div>
 
     <div class="mt-8 md:mt-12 w-full max-w-4xl">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            
             @for ($i = 1; $i <= 4; $i++)
-                @php 
-                    $player = collect($players)->firstWhere('position', $i);
-                @endphp
-
+                @php $player = collect($players)->firstWhere('position', $i); @endphp
                 <div class="bg-gray-800 rounded-xl p-3 md:p-4 border-2 {{ $player ? 'border-green-500 bg-gray-700' : 'border-gray-700 border-dashed' }} flex flex-col items-center justify-center h-24 md:h-32 relative overflow-hidden transition-all duration-500">
-                    
                     @if($player)
-                        <div class="absolute top-0 right-0 bg-green-500 text-black text-[8px] md:text-[10px] font-bold px-2 py-1 rounded-bl-lg">
-                            READY
-                        </div>
+                        <div class="absolute top-0 right-0 bg-green-500 text-black text-[8px] md:text-[10px] font-bold px-2 py-1 rounded-bl-lg">READY</div>
                         <span class="text-2xl md:text-3xl mb-1">👤</span>
-                        <h3 class="font-bold text-sm md:text-lg truncate w-full text-center text-yellow-400">
-                            {{ $player['name'] }}
-                        </h3>
+                        <h3 class="font-bold text-sm md:text-lg truncate w-full text-center text-yellow-400">{{ $player['name'] }}</h3>
                         <p class="text-[10px] md:text-xs text-gray-300">Pemain {{ $i }}</p>
                     @else
                         <span class="text-2xl md:text-3xl mb-1 opacity-20">👤</span>
                         <h3 class="font-bold text-sm md:text-lg text-gray-600">Kosong</h3>
                         <p class="text-[10px] md:text-xs text-gray-600">Pemain {{ $i }}</p>
                     @endif
-                    
                 </div>
             @endfor
-
         </div>
     </div>
     
     <div class="mt-8 text-gray-600 text-[10px] md:text-xs text-center">
         Sistem Remi Digital v2.0 • Realtime VPS
     </div>
-
 </div>
