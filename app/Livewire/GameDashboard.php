@@ -4,12 +4,18 @@ namespace App\Livewire;
 
 use App\Models\Game;
 use Livewire\Component;
+use App\Events\GameOver; // <--- Import Event
 
 class GameDashboard extends Component
 {
     public $game;
     public $players;
-    public $logs = []; // Untuk menampilkan riwayat (Si A Cekih Si B)
+    public $logs = [];
+    
+    // Status Game Over
+    public $winner = null;
+    public $loser = null;
+    public $showEndScreen = false;
 
     public function mount(Game $game)
     {
@@ -20,36 +26,34 @@ class GameDashboard extends Component
     public function getListeners()
     {
         return [
-            // Dengar sinyal 'ScoreUpdated', lalu jalankan refreshData
-            "echo:game.{$this->game->id},ScoreUpdated" => 'refreshData'
+            "echo:game.{$this->game->id},ScoreUpdated" => 'refreshData',
+            "echo:game.{$this->game->id},GameOver" => 'showGameResult' // <--- Listener Baru
         ];
+    }
+
+    public function showGameResult($payload)
+    {
+        $this->refreshData(); 
+        $this->showEndScreen = true;
+        
+        if ($payload['reason'] == 'winner') {
+            // Jika ada yang tembus 1000, dia pemenangnya
+            $this->winner = $this->game->players->where('id', $payload['playerData']['id'])->first();
+        } else {
+            // Jika ada yang bangkrut, dia loser
+            $this->loser = $this->game->players->where('id', $payload['playerData']['id'])->first();
+            // Pemenang adalah pemilik skor tertinggi saat ini
+            $this->winner = $this->game->players->sortByDesc('score')->first();
+        }
     }
 
     public function refreshData()
     {
-        // Ambil data terbaru
         $this->game->refresh();
-        
-        // Urutkan pemain berdasarkan Posisi (1-4) agar tampilan tetap konsisten
-        // Jangan diurutkan berdasarkan skor, nanti bingung kalau posisi kartu di meja tetap
         $this->players = $this->game->players()->orderBy('position')->get();
-
-        // Ambil 5 riwayat terakhir untuk ditampilkan di log
-        $this->logs = $this->game->histories()
-            ->with('player')
-            ->latest()
-            ->take(5)
-            ->get();
-            
-        // Cek Status Kemenangan (1000 atau -500)
-        $this->checkWinner();
+        $this->logs = $this->game->histories()->with('player')->latest()->take(5)->get();
     }
     
-    public function checkWinner()
-    {
-        // Nanti kita isi logika endgame disini
-    }
-
     public function render()
     {
         return view('livewire.game-dashboard');
